@@ -1,14 +1,14 @@
-Microsoft (R) Macro Assembler Version 14.28.29913.0	    03/30/21 18:55:31
-#Program Template     (template.asm			     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    05/31/21 15:47:39
+)Program Template     (Proj5_fonbergi.asm		     Page 1 - 1
 
 
-				TITLE Program Template     (template.asm)
+				TITLE Program Template     (Proj5_fonbergi.asm)
 
-				; Author: 
-				; Last Modified:
-				; OSU email address: ONID_ID@oregonstate.edu
-				; Course number/section:   CS271 Section ???
-				; Project Number:                 Due Date:
+				; Author: Ian Fonberg
+				; Last Modified: 5/31/2021
+				; OSU email address: fonbergi@oregonstate.edu
+				; Course number/section:   CS271 Section 400
+				; Project Number: 6               Due Date: 6/6/2021
 				; Description: This file is provided as a template from which you may work
 				;              when developing assembly projects in CS271.
 
@@ -31,31 +31,204 @@ Microsoft (R) Macro Assembler Version 14.28.29913.0	    03/30/21 18:55:31
 			      C .LIST
 			      C 
 
-				; (insert macro definitions here)
 
-				; (insert constant definitions here)
+				; ---------------------------------------------------------------------------------
+				; Name: mGetString
+				; 
+				; Display prompt and get the user's input into a memory location.
+				;
+				; Preconditions: Do not use EAX, ECX, or EDX as arguments
+				;
+				; Postconditions: none
+				;
+				; Receives:
+				;   getPrompt   = input, offset of prompt to display
+				;   getLength   = input, value of maximum length of user input string
+				;   getDest     = output, offset of user input string
+				;   getBytes    = output, offset of number of bytes read
+				;
+				; Returns:
+				;   getDest     = raw user input
+				;   getBytes    = bytes written
+				; ---------------------------------------------------------------------------------
+				mGetString MACRO getPrompt:REQ, getLength:REQ, getDest:REQ, getBytes:REQ
+				    PUSH    EAX
+				    PUSH    ECX
+				    PUSH    EDX
+				    PUSH    EDI
+
+				; Display Prompt.
+				    MOV     EDX, getPrompt
+				    CALL    WriteString
+				    
+				; Store Raw Input
+				    MOV     ECX, getLength      ; Max limit of readable characters.
+				    MOV     EDX, getDest
+				    
+				    CALL    ReadString
+
+				    MOV     EDI, getBytes
+				    MOV     [EDI], EAX       ; Store bytes read.
+
+				    POP     EDI
+				    POP     EDX
+				    POP     ECX
+				    POP     EAX
+				ENDM
+
+
+				; ---------------------------------------------------------------------------------
+				; Name: mDisplayString
+				; 
+				; Print the string which is stored in a specified memory location.
+				;
+				; Preconditions: Do not use EDX as an argument.
+				;
+				; Postconditions: none
+				;
+				; Receives:
+				;   displayStr  = input, offset of string to display
+				;
+				; Returns: none
+				; ---------------------------------------------------------------------------------
+				mDisplayString MACRO displayStr:REQ
+				    PUSH    EDX
+
+				; Display stored string.
+				    MOV     EDX, displayStr
+				    CALL    WriteString
+
+				    POP     EDX
+				ENDM
+
+
+ = 0000000C			MAX_INPUT = 12
 
  00000000			.data
 
-				; (insert variable definitions here)
+ 00000000 50 6C 65 61 73	firstAttempt    BYTE    "Please enter an signed number: ",0
+	   65 20 65 6E 74
+	   65 72 20 61 6E
+	   20 73 69 67 6E
+	   65 64 20 6E 75
+	   6D 62 65 72 3A
+	   20 00
+ 00000020  0000000C [		rawNumString    BYTE    MAX_INPUT DUP(0)
+	    00
+	   ]
+ 0000002C 00000000		bytesRead       DWORD   ?
+ 00000030 00000000		validNum        DWORD   ?
 
  00000000			.code
  00000000			main PROC
 
-				; (insert executable instructions here)
+ 00000000  68 00000000 R	    PUSH    OFFSET firstAttempt
+ 00000005  68 00000020 R	    PUSH    OFFSET rawNumString
+ 0000000A  68 0000002C R	    PUSH    OFFSET bytesRead
+ 0000000F  FF 35 00000030 R	    PUSH    validNum
+ 00000015  E8 00000049		    CALL    ReadVal
 
-					Invoke ExitProcess,0	; exit to operating system
- 00000000  6A 00	   *	    push   +000000000h
- 00000002  E8 00000000 E   *	    call   ExitProcess
- 00000007			main ENDP
+ 0000001A  BA 00000020 R	    MOV     EDX, OFFSET rawNumString
+ 0000001F  E8 00000000 E	    CALL    WriteString
+ 00000024  A1 0000002C R	    MOV     EAX, bytesRead
+ 00000029  E8 00000000 E	    CALL    WriteDec
 
-				; (insert additional procedures here)
+ 0000002E  68 00000000 R	    PUSH    OFFSET firstAttempt
+ 00000033  68 00000020 R	    PUSH    OFFSET rawNumString
+ 00000038  68 0000002C R	    PUSH    OFFSET bytesRead
+ 0000003D  FF 35 00000030 R	    PUSH    validNum
+ 00000043  E8 0000001B		    CALL    ReadVal
+
+ 00000048  BA 00000020 R	    MOV     EDX, OFFSET rawNumString
+ 0000004D  E8 00000000 E	    CALL    WriteString
+ 00000052  A1 0000002C R	    MOV     EAX, bytesRead
+ 00000057  E8 00000000 E	    CALL    WriteDec
+
+				    Invoke ExitProcess,0	; exit to operating system
+ 0000005C  6A 00	   *	    push   +000000000h
+ 0000005E  E8 00000000 E   *	    call   ExitProcess
+ 00000063			main ENDP
+
+
+				; ---------------------------------------------------------------------------------
+				; Name: ReadVal
+				; 
+				; Gets user input in the form of a string of digits, then attempts to convert the
+				;   string of ASCII digits to its numeric value representation. If the input is
+				;   invalid, the user is prompted to try again with an appropriate value, otherwise
+				;   the value is stored in memory.
+				;
+				; Preconditions: none
+				;
+				; Postconditions: none
+				;
+				; Receives:
+				;   [EBP+20]    = input, offset of first attemnpt prompt
+				;   [EBP+16]    = output, offset of user input string
+				;   [EBP+12]    = output, offset of number of bytes read
+				;   [EBP+8]     = output, offset of number storage
+				;
+				; Returns: [EBP+8] = validated number
+				; ---------------------------------------------------------------------------------
+ 00000063			ReadVal PROC
+ 00000063  55			    PUSH    EBP
+ 00000064  8B EC		    MOV     EBP, ESP
+
+				    mGetString [EBP+20], MAX_INPUT, [EBP+16], [EBP+12]
+ 00000066  50		     1	    PUSH    EAX
+ 00000067  51		     1	    PUSH    ECX
+ 00000068  52		     1	    PUSH    EDX
+ 00000069  57		     1	    PUSH    EDI
+ 0000006A  8B 55 14	     1	    MOV     EDX, [EBP+20]
+ 0000006D  E8 00000000 E     1	    CALL    WriteString
+ 00000072  B9 0000000C	     1	    MOV     ECX, MAX_INPUT      ; Max limit of readable characters.
+ 00000077  8B 55 10	     1	    MOV     EDX, [EBP+16]
+ 0000007A  E8 00000000 E     1	    CALL    ReadString
+ 0000007F  8B 7D 0C	     1	    MOV     EDI, [EBP+12]
+ 00000082  89 07	     1	    MOV     [EDI], EAX       ; Store bytes read.
+ 00000084  5F		     1	    POP     EDI
+ 00000085  5A		     1	    POP     EDX
+ 00000086  59		     1	    POP     ECX
+ 00000087  58		     1	    POP     EAX
+
+ 00000088  5D			    POP     EBP
+ 00000089  C3			    RET
+ 0000008A			ReadVal ENDP
+
+
+				; ---------------------------------------------------------------------------------
+				; Name: WriteVal
+				; 
+				; Convert a numeric SDWORD value to a string of ASCII digits and displays it to
+				;   the user.
+				;
+				; Preconditions: none
+				;
+				; Postconditions: none
+				;
+				; Receives:
+				;   [EBP+8]     = input, numeric SDWORD value
+				;
+				; Returns: none
+				; ---------------------------------------------------------------------------------
+ 0000008A			WriteVal PROC
+ 0000008A  C3			    RET
+ 0000008B			WriteVal ENDP
+
 
 				END main
-Microsoft (R) Macro Assembler Version 14.28.29913.0	    03/30/21 18:55:31
-#Program Template     (template.asm			     Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    05/31/21 15:47:39
+)Program Template     (Proj5_fonbergi.asm		     Symbols 2 - 1
 
 
+
+
+Macros:
+
+                N a m e                 Type
+
+mDisplayString . . . . . . . . .	Proc
+mGetString . . . . . . . . . . .	Proc
 
 
 Structures and Unions:
@@ -146,8 +319,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000000 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000007 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000034 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000008B Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -217,6 +390,7 @@ ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadVal  . . . . . . . . . . . .	P Near	 00000063 _TEXT	Length= 00000027 Public STDCALL
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -253,8 +427,9 @@ WriteStackFrameName  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteVal . . . . . . . . . . . .	P Near	 0000008A _TEXT	Length= 00000001 Public STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000007 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000063 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -346,6 +521,7 @@ KEY_EVENT  . . . . . . . . . . .	Number	 00000001h
 KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh   
 LEFT_ALT_PRESSED . . . . . . . .	Number	 00000002h   
 LEFT_CTRL_PRESSED  . . . . . . .	Number	 00000008h   
+MAX_INPUT  . . . . . . . . . . .	Number	 0000000Ch   
 MB_ABORTRETRYIGNORE  . . . . . .	Number	 00000002h   
 MB_APPLMODAL . . . . . . . . . .	Number	 00000000h   
 MB_CANCELTRYCONTINUE . . . . . .	Number	 00000006h   
@@ -476,8 +652,10 @@ WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
+bytesRead  . . . . . . . . . . .	DWord	 0000002C _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
+firstAttempt . . . . . . . . . .	Byte	 00000000 _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
@@ -487,7 +665,9 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
+rawNumString . . . . . . . . . .	Byte	 00000020 _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
+validNum . . . . . . . . . . . .	DWord	 00000030 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   

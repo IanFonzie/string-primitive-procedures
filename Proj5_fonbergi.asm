@@ -10,12 +10,13 @@ TITLE Program Template     (Proj5_fonbergi.asm)
 
 INCLUDE Irvine32.inc
 
+
 ; ---------------------------------------------------------------------------------
 ; Name: mGetString
 ; 
 ; Display prompt and get the user's input into a memory location.
 ;
-; Preconditions: Do not use EAX, ECX, EDX or EDI as arguments
+; Preconditions: Do not use EAX, ECX, or EDX as arguments
 ;
 ; Postconditions: none
 ;
@@ -23,14 +24,35 @@ INCLUDE Irvine32.inc
 ;   getPrompt   = input, offset of prompt to display
 ;   getLength   = input, value of maximum length of user input string
 ;   getDest     = output, offset of user input string
-;   getBytes    = output, value of number of bytes written
+;   getBytes    = output, offset of number of bytes read
 ;
 ; Returns:
 ;   getDest     = raw user input
 ;   getBytes    = bytes written
 ; ---------------------------------------------------------------------------------
 mGetString MACRO getPrompt:REQ, getLength:REQ, getDest:REQ, getBytes:REQ
-    ; stuff
+    PUSH    EAX
+    PUSH    ECX
+    PUSH    EDX
+    PUSH    EDI
+
+; Display Prompt.
+    MOV     EDX, getPrompt
+    CALL    WriteString
+    
+; Store Raw Input
+    MOV     ECX, getLength      ; Max limit of readable characters.
+    MOV     EDX, getDest
+    
+    CALL    ReadString
+
+    MOV     EDI, getBytes
+    MOV     [EDI], EAX       ; Store bytes read.
+
+    POP     EDI
+    POP     EDX
+    POP     ECX
+    POP     EAX
 ENDM
 
 
@@ -49,19 +71,49 @@ ENDM
 ; Returns: none
 ; ---------------------------------------------------------------------------------
 mDisplayString MACRO displayStr:REQ
-    ; stuff
+    PUSH    EDX
+
+; Display stored string.
+    MOV     EDX, displayStr
+    CALL    WriteString
+
+    POP     EDX
 ENDM
 
-; (insert constant definitions here)
+
+MAX_INPUT = 12
 
 .data
 
-; (insert variable definitions here)
+firstAttempt    BYTE    "Please enter an signed number: ",0
+rawNumString    BYTE    MAX_INPUT DUP(0)
+bytesRead       DWORD   ?
+validNum        DWORD   ?
 
 .code
 main PROC
 
-; (insert executable instructions here)
+    PUSH    OFFSET firstAttempt
+    PUSH    OFFSET rawNumString
+    PUSH    OFFSET bytesRead
+    PUSH    validNum
+    CALL    ReadVal
+
+    MOV     EDX, OFFSET rawNumString
+    CALL    WriteString
+    MOV     EAX, bytesRead
+    CALL    WriteDec
+
+    PUSH    OFFSET firstAttempt
+    PUSH    OFFSET rawNumString
+    PUSH    OFFSET bytesRead
+    PUSH    validNum
+    CALL    ReadVal
+
+    MOV     EDX, OFFSET rawNumString
+    CALL    WriteString
+    MOV     EAX, bytesRead
+    CALL    WriteDec
 
     Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -80,11 +132,20 @@ main ENDP
 ; Postconditions: none
 ;
 ; Receives:
+;   [EBP+20]    = input, offset of first attemnpt prompt
+;   [EBP+16]    = output, offset of user input string
+;   [EBP+12]    = output, offset of number of bytes read
 ;   [EBP+8]     = output, offset of number storage
 ;
 ; Returns: [EBP+8] = validated number
 ; ---------------------------------------------------------------------------------
 ReadVal PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+
+    mGetString [EBP+20], MAX_INPUT, [EBP+16], [EBP+12]
+
+    POP     EBP
     RET
 ReadVal ENDP
 
@@ -104,9 +165,9 @@ ReadVal ENDP
 ;
 ; Returns: none
 ; ---------------------------------------------------------------------------------
-ReadVal PROC
+WriteVal PROC
     RET
-ReadVal ENDP
+WriteVal ENDP
 
 
 END main
