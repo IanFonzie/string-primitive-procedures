@@ -102,11 +102,12 @@ main PROC
     PUSH    OFFSET secondAttempt
     PUSH    OFFSET rawNumString
     PUSH    OFFSET bytesRead
-    PUSH    validNum
+    PUSH    OFFSET validNum
     CALL    ReadVal
 
-    MOV     EDX, OFFSET rawNumString
-    CALL    WriteString
+    MOV     EAX, validNum
+    CALL    WriteInt
+    CALL    CrLf
     MOV     EAX, bytesRead
     CALL    WriteDec
 
@@ -116,11 +117,12 @@ main PROC
     PUSH    OFFSET secondAttempt
     PUSH    OFFSET rawNumString
     PUSH    OFFSET bytesRead
-    PUSH    validNum
+    PUSH    OFFSET validNum
     CALL    ReadVal
 
-    MOV     EDX, OFFSET rawNumString
-    CALL    WriteString
+    MOV     EAX, validNum
+    CALL    WriteInt
+    CALL    CrLf
     MOV     EAX, bytesRead
     CALL    WriteDec
 
@@ -151,9 +153,12 @@ main ENDP
 ;
 ; Returns: [EBP+8] = validated number
 ; ---------------------------------------------------------------------------------
-ReadVal PROC USES EAX ECX EDX ESI
+ReadVal PROC USES EAX EBX ECX EDX ESI
     LOCAL valid:BYTE, numInt:DWORD, sign:DWORD
-    
+
+; -------------------------
+; Get Integer Digits.
+; -------------------------
     MOV     valid, 1                                    ; Initialize valid to true.
 ; Display initial prompt for signed number.
     mGetString [EBP+32], MAX_INPUT, [EBP+16], [EBP+12]
@@ -168,9 +173,13 @@ _validateDigits:
 ; Prompt for new signed integer.
     mGetString [EBP+20], MAX_INPUT, [EBP+16], [EBP+12]
 
-    MOV     ECX, bytesRead
-
 _endTryAgain:
+    MOV     ECX, bytesRead                              ; Initialize counter.
+    INC     ECX
+
+; -------------------------
+; Assert input is non-empty.
+; -------------------------
 ; Assert a value was read.
     CMP     bytesRead, 0
     JNE     _notEmpty
@@ -182,9 +191,13 @@ _endTryAgain:
     JMP     _validateDigits
 _notEmpty:
     MOV     ESI, [EBP+16]                               ; Move user input to ESI.
-    
+ 
+; -------------------------
+; Assert sign is either first character or absent.
+; -------------------------
     CLD
-    LODSB                                               ; Load first character
+    LODSB
+    DEC     ECX                                         ; Load first character and adjust counter position.
 
     CMP     AL, 45                                      ; is the character a '-' sign?
     JE      _setNegative
@@ -202,9 +215,53 @@ _checkLength:
     MOV     EDX, [EBP+24]
     CALL    WriteString
     JMP     _validateDigits
+
 _loadNext:
     LODSB
+    DEC     ECX                                         ; Load second character and adjust counter position.
 _aggregateNum:
+   
+    ; -------------------------
+    ; Aggregate digits into integer.
+    ; -------------------------
+    _readDigit:
+        CMP     AL, 48
+        JB      _notDigitOrTooLarge
+        CMP      AL, 57
+        JA      _notDigitOrTooLarge
+        
+    ; ASCII value - 48 will result in an integer between 0 and 9, inclusive.
+        MOVZX   EBX, AL
+        SUB     EBX, 48
+
+    ; Multiply 10x current numInt.
+        MOV     EAX, 10
+        MUL     numInt
+        JO      _notDigitOrTooLarge                     ; Invalid if overflow.
+
+    ; Add both combinInteger value.
+        ADD     EAX, EBX
+        JO      _notDigitOrTooLarge                     ; Invalid if overflow.
+
+        MOV     numInt, EAX
+
+        JMP     _continueRead
+    _notDigitOrTooLarge:
+        MOV     valid, 0                                ; Valid is false.
+        MOV     EDX, [EBP+24]
+        CALL    WriteString
+        JMP     _validateDigits
+    _continueRead:
+        LODSB
+        LOOP    _readDigit
+
+; -------------------------
+; Store number.
+; -------------------------
+    MOV     EAX, numInt
+    MUL     sign                                        ; Multiply by sign to get correct value.
+    MOV     EDI, [EBP+8]
+    MOV     [EDI], EAX
 
     RET 24
 ReadVal ENDP
