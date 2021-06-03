@@ -91,7 +91,7 @@ emptyMsg        BYTE    "ERROR: a value is required.",13,10,0
 errorMsg        BYTE    "ERROR: You did not enter a signed number or your number was too big.",13,10,0
 rawNumString    BYTE    MAX_INPUT DUP(0)
 bytesRead       DWORD   ?
-validNum        DWORD   ?
+validNum        SDWORD  ?
 
 .code
 main PROC
@@ -154,7 +154,7 @@ main ENDP
 ; Returns: [EBP+8] = validated number
 ; ---------------------------------------------------------------------------------
 ReadVal PROC USES EAX EBX ECX EDX ESI
-    LOCAL valid:BYTE, numInt:DWORD, sign:DWORD
+    LOCAL valid:BYTE, numInt:DWORD, sign:SDWORD
 
 ; -------------------------
 ; Get Integer Digits.
@@ -233,13 +233,14 @@ _aggregateNum:
     ; ASCII value - 48 will result in an integer between 0 and 9, inclusive.
         MOVZX   EBX, AL
         SUB     EBX, 48
+        IMUL    EBX, sign                               ; Calculated signed amount to add to total.
 
     ; Multiply 10x current numInt.
         MOV     EAX, 10
-        MUL     numInt
+        IMUL    numInt
         JO      _notDigitOrTooLarge                     ; Invalid if overflow.
 
-    ; Add both combinInteger value.
+    ; Add both to get current integer value.
         ADD     EAX, EBX
         JO      _notDigitOrTooLarge                     ; Invalid if overflow.
 
@@ -258,9 +259,8 @@ _aggregateNum:
 ; -------------------------
 ; Store number.
 ; -------------------------
-    MOV     EAX, numInt
-    MUL     sign                                        ; Multiply by sign to get correct value.
     MOV     EDI, [EBP+8]
+    MOV     EAX, numInt
     MOV     [EDI], EAX
 
     RET 24
