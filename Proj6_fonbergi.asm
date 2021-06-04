@@ -5,8 +5,17 @@ TITLE Program Template     (Proj6_fonbergi.asm)
 ; OSU email address: fonbergi@oregonstate.edu
 ; Course number/section:   CS271 Section 400
 ; Project Number: 6               Due Date: 6/6/2021
-; Description: This file is provided as a template from which you may work
-;              when developing assembly projects in CS271.
+; Description: Implements the macros mGetString and mDisplayString to get user
+;   input strings and display strings using Irvine procedures ReadString and
+;   WriteString, respectively. These macros are used to write the low-level
+;   procedures ReadVal and WriteVal. ReadVal prompts the user for a signed
+;   integer, validates it, and stores it as an SDWORD. WriteVal takes a stored
+;   SDWORD and converts it to a string that is displayed to output. All of
+;   these macros and procedures are used to write a test script within main
+;   that greets the user, gets 10 signed integers from the user calculating the
+;   sum and displaying a subtotal along the way. Next, it displays the numbers
+;   back to the user along with the final sum and average of the numbers.
+;   Finally, the test script says goodbye to the user and exits.
 
 INCLUDE Irvine32.inc
 
@@ -16,7 +25,7 @@ INCLUDE Irvine32.inc
 ; 
 ; Display prompt and get the user's input into a memory location.
 ;
-; Preconditions: Do not use EAX, ECX, or EDX as arguments
+; Preconditions: Do not use EAX, ECX, EDX, or EDI as arguments
 ;
 ; Postconditions: none
 ;
@@ -85,12 +94,11 @@ ARRAY_SIZE = 10
 
 .data
 
-firstAttempt    BYTE    " Please enter a signed number: ",0
-secondAttempt   BYTE    " Please try again: ",0
+firstAttempt    BYTE    ". Please enter a signed number: ",0
+secondAttempt   BYTE    ". Please try again: ",0
 emptyMsg        BYTE    "ERROR: a value is required.",13,10,0
 errorMsg        BYTE    "ERROR: You did not enter a signed number or your number was too big.",13,10,0
 rawNumString    BYTE    MAX_DIGITS DUP(0)
-bytesRead       DWORD   ?
 validNum        SDWORD  ?
 intro1          BYTE    "PROGRAMMING ASSIGNMENT 6: Designing low-level I/O procedures",13,10,
                         "Written by: Ian Fonberg",13,10,
@@ -101,6 +109,7 @@ intro2          BYTE    " signed decimal integers.",13,10,
                         "finished inputting the raw numbers I will display a list of the integers, their sum, ",
                         "and their average value.",13,10,13,10,0
 testArr         SDWORD  ARRAY_SIZE DUP(?)
+subtotal        BYTE    "Subtotal: ",0
 numsEntered     BYTE    "You entered the following numbers: ",13,10,0
 comma           BYTE    ", ",0
 sumNums         BYTE    "The sum of these numbers is: ",0
@@ -125,7 +134,8 @@ main PROC
 ; -------------------------
 ; Add user input to array.
 ; -------------------------
-    MOV     ECX, ARRAY_SIZE                 ; Initialize counter to 
+    MOV     EAX, 0                                      ; Initialize sum.
+    MOV     ECX, ARRAY_SIZE                             ; Initialize counter to ARRAY_SIZE.
     MOV     EDI, OFFSET testArr
 _readLoop:
     PUSH    OFFSET lineNo
@@ -134,14 +144,23 @@ _readLoop:
     PUSH    OFFSET errorMsg
     PUSH    OFFSET secondAttempt
     PUSH    OFFSET rawNumString
-    PUSH    OFFSET bytesRead
     PUSH    OFFSET validNum
     CALL    ReadVal
 
 ; Insert signed integer using register indirect addressing.
     MOV     EBX, validNum
     MOV     [EDI], EBX
-    ADD     EDI, TYPE testArr
+
+; -------------------------
+; Display Subtotal.
+; -------------------------
+    ADD     EAX, EBX                                    ; Add valid number to total.
+    mDisplayString OFFSET subtotal
+    PUSH    EAX
+    CALL    WriteVal
+    CALL    CrLf
+
+    ADD     EDI, TYPE testArr                           ; Move to next element.
 
     LOOP    _readLoop
     CALL    CrLf
@@ -153,12 +172,10 @@ _readLoop:
 
     MOV     ESI, OFFSET testArr
     MOV     ECX, ARRAY_SIZE
-    MOV     EAX, 0                                      ; Initialize sum
     
     PUSH    [ESI]
     CALL    WriteVal                                    ; Display first number
 
-    ADD     EAX, [ESI]                                  ; Add first number to sum
     DEC     ECX                                         ; Decrement counter.
 
 _writeLoop:
@@ -169,8 +186,6 @@ _writeLoop:
 
     PUSH    [ESI]
     CALL    WriteVal                                    ; Display the current number.
-
-    ADD     EAX, [ESI]                                  ; Add current number to sum.
     
     LOOP    _writeLoop
     CALL    CrLf
@@ -226,21 +241,20 @@ main ENDP
 ; Postconditions: none
 ;
 ; Receives:
-;   [EBP+36]    = input/output, offset of current number of valid guesses.
-;   [EBP+32]    = input, offset of first attempt prompt
-;   [EBP+28]    = input, offset of empty error message
-;   [EBP+24]    = input, offset of invalid error message
-;   [EBP+20]    = input, offset of second attempt prompt
-;   [EBP+16]    = output, offset of user input string
-;   [EBP+12]    = output, offset of number of bytes read
+;   [EBP+32]    = input/output, offset of current number of valid guesses.
+;   [EBP+28]    = input, offset of first attempt prompt
+;   [EBP+24]    = input, offset of empty error message
+;   [EBP+20]    = input, offset of invalid error message
+;   [EBP+16]    = input, offset of second attempt prompt
+;   [EBP+12]    = output, offset of user input string
 ;   [EBP+8]     = output, offset of number storage
 ;
 ; Returns:
+;   [EBP+32]    = Incremented by one.
 ;   [EBP+8]     = validated number
-;   [EBP+36]    = Incremented by one.
 ; ---------------------------------------------------------------------------------
 ReadVal PROC USES EAX EBX ECX EDI ESI
-    LOCAL valid:BYTE, numInt:SDWORD, sign:SDWORD
+    LOCAL valid:BYTE, numInt:SDWORD, sign:SDWORD, bytesRead:DWORD
 
 ; -------------------------
 ; Get Integer Digits.
@@ -248,10 +262,11 @@ ReadVal PROC USES EAX EBX ECX EDI ESI
     MOV     valid, 1                                    ; Initialize valid to true.
 
 ; Display initial prompt for signed number.
-    MOV     EBX, [EBP+36]
+    MOV     EBX, [EBP+32]
     PUSH    [EBX]
     CALL    WriteVal                                    ; Display line number.
-    mGetString [EBP+32], MAX_DIGITS, [EBP+16], [EBP+12]
+    LEA     EBX, bytesRead
+    mGetString [EBP+28], MAX_DIGITS, [EBP+12], EBX
 
 _validateDigits:
     MOV     numInt, 0                                   ; Initialize integer aggregator to 0.
@@ -261,10 +276,11 @@ _validateDigits:
     JNE     _endTryAgain
 
 ; Prompt for new signed integer.
-    MOV     EBX, [EBP+36]
+    MOV     EBX, [EBP+32]
     PUSH    [EBX]
     CALL    WriteVal                                    ; Display line number.
-    mGetString [EBP+20], MAX_DIGITS, [EBP+16], [EBP+12]
+    LEA     EBX, bytesRead
+    mGetString [EBP+16], MAX_DIGITS, [EBP+12], EBX
 
 _endTryAgain:
     MOV     ECX, bytesRead                              ; Initialize counter.
@@ -279,10 +295,10 @@ _endTryAgain:
 
 ; Set error state.
     MOV     valid, 0                                    ; Valid is false.
-    mDisplayString [EBP+28]
+    mDisplayString [EBP+24]
     JMP     _validateDigits
 _notEmpty:
-    MOV     ESI, [EBP+16]                               ; Move user input to ESI.
+    MOV     ESI, [EBP+12]                               ; Move user input to ESI.
  
 ; -------------------------
 ; Assert sign is either first character or absent.
@@ -304,7 +320,7 @@ _checkLength:
     JNE     _loadNext
 ; Set error state.
     MOV     valid, 0                                    ; Valid is false.
-    mDisplayString [EBP+24]
+    mDisplayString [EBP+20]
     JMP     _validateDigits
 
 _loadNext:
@@ -340,7 +356,7 @@ _aggregateNum:
         JMP     _continueRead
     _notDigitOrTooLarge:
         MOV     valid, 0                                ; Valid is false.
-        mDisplayString [EBP+24]
+        mDisplayString [EBP+20]
         JMP     _validateDigits
     _continueRead:
         LODSB
@@ -354,10 +370,10 @@ _aggregateNum:
     MOV     [EDI], EAX
 
 ; Increment line number.
-    MOV     EBX, [EBP+36]
+    MOV     EBX, [EBP+32]
     INC     BYTE PTR [EBX]
 
-    RET     32
+    RET     28
 ReadVal ENDP
 
 
