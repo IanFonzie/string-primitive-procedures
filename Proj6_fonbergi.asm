@@ -82,6 +82,7 @@ ENDM
 
 
 MAX_DIGITS = 12
+ARRAY_SIZE = 10
 
 .data
 
@@ -92,10 +93,42 @@ errorMsg        BYTE    "ERROR: You did not enter a signed number or your number
 rawNumString    BYTE    MAX_DIGITS DUP(0)
 bytesRead       DWORD   ?
 validNum        SDWORD  ?
+intro1          BYTE    "PROGRAMMING ASSIGNMENT 6: Designing low-level I/O procedures",13,10,
+                        "Written by: Ian Fonberg",13,10,13,10,
+                        "Please provide ",0
+intro2          BYTE    " signed decimal integers.",13,10,
+                        "Each number needs to be small enough to fit inside a 32 bit register. After you have ",
+                        "finished inputting the raw numbers I will display a list of the integers, their sum, ",
+                        "and their average value.",13,10,13,10,0
+testArr         SDWORD  ARRAY_SIZE DUP(?)
+numsEntered     BYTE    "You entered the following numbers: ",13,10,0
+comma           BYTE    ", ",0
+sumNums         BYTE    "The sum of these numbers is: ",0
+avgNums         BYTE    "The rounded average is: ",0
+goodbye         BYTE    "Thanks for playing!",0
 
 .code
 main PROC
 
+; -------------------------
+; Test Script
+; -------------------------
+; Introduce test script.
+    MOV     EDX, OFFSET intro1
+    CALL    WriteString
+
+    PUSH    ARRAY_SIZE
+    CALL    WriteVal
+
+    MOV     EDX, OFFSET intro2
+    CALL    WriteString
+
+; -------------------------
+; Add user input to array.
+; -------------------------
+    MOV     ECX, ARRAY_SIZE             ; Initialize counter to 
+    MOV     EDI, OFFSET testArr
+_readLoop:
     PUSH    OFFSET firstAttempt
     PUSH    OFFSET emptyMsg
     PUSH    OFFSET errorMsg
@@ -105,8 +138,80 @@ main PROC
     PUSH    OFFSET validNum
     CALL    ReadVal
 
-    PUSH    validNum
+; Insert signed integer using register indirect addressing.
+    MOV     EBX, validNum
+    MOV     [EDI], EBX
+    ADD     EDI, TYPE testArr
+
+    LOOP    _readLoop
+    CALL    CrLf
+
+; -------------------------
+; Display numbers entered and calculate sum.
+; -------------------------
+    MOV     EDX, OFFSET numsEntered
+    CALL    WriteString
+
+    MOV     ESI, OFFSET testArr
+    MOV     ECX, ARRAY_SIZE
+    MOV     EAX, 0                      ; Initialize sum
+    
+    PUSH    [ESI]
+    CALL    WriteVal                    ; Display first number
+
+    ADD     EAX, [ESI]                  ; Add first number to sum
+    DEC     ECX                         ; Decrement counter.
+
+_writeLoop:
+; Comma separate the numbers
+    MOV     EDX, OFFSET comma
+    CALL    WriteString
+
+    ADD     ESI, TYPE testArr           ; Access next number using register indirect addressing.
+
+    PUSH    [ESI]
+    CALL    WriteVal                    ; Display the current number.
+
+    ADD     EAX, [ESI]                  ; Add current number to sum.
+    
+    LOOP    _writeLoop
+    CALL    CrLf
+
+; -------------------------
+; Display sum of numbers entered.
+; -------------------------
+    MOV     EDX, OFFSET sumNums
+    CALL    WriteString
+
+    PUSH    EAX                         ; EAX holds final sum.
     CALL    WriteVal
+    CALL    CrLf
+
+; -------------------------
+; Calculate and display average of numbers entered.
+; -------------------------
+    MOV     EBX, ARRAY_SIZE
+    CDQ
+    IDIV    EBX
+
+; Floor negative numbers with remainders.
+    CMP     EDX, 0
+    JGE     _alreadyFloored
+    DEC     EAX
+
+_alreadyFloored:
+    MOV     EDX, OFFSET avgNums
+    CALL    WriteString
+    
+    PUSH     EAX                        ; EAX contains floored average.
+    CALL    WriteVal
+
+    CALL    CrLf
+    CALL    CrLf
+
+; Say goodbye to user.
+    MOV     EDX, OFFSET goodbye
+    CALL    WriteString
 
     Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -135,7 +240,7 @@ main ENDP
 ;
 ; Returns: [EBP+8] = validated number
 ; ---------------------------------------------------------------------------------
-ReadVal PROC USES EAX EBX ECX EDX ESI
+ReadVal PROC USES EAX EBX ECX EDX EDI ESI
     LOCAL valid:BYTE, numInt:SDWORD, sign:SDWORD
 
 ; -------------------------
@@ -320,7 +425,7 @@ _terminateDigits:
 
 _reverseDigits:
     STD
-    LODSB                           ; Move backwards through digit and store result in AL
+    LODSB                           ; Move backwards through digit and load result in AL
     CLD
     STOSB                           ; Move forwards through strNum and store the result from AL
     LOOP _reverseDigits
