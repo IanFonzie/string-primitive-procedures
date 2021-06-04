@@ -49,13 +49,13 @@ mGetString MACRO getPrompt:REQ, getLength:REQ, getDest:REQ, getBytes:REQ
     mDisplayString getPrompt
     
 ; Store Raw Input
-    MOV     ECX, getLength      ; Max limit of readable characters.
+    MOV     ECX, getLength                              ; Max limit of readable characters.
     MOV     EDX, getDest
 
     CALL    ReadString
 
     MOV     EDI, getBytes
-    MOV     [EDI], EAX       ; Store bytes read.
+    MOV     [EDI], EAX                                  ; Store bytes read.
 
     POP     EDI
     POP     EDX
@@ -166,7 +166,7 @@ _readLoop:
     CALL    CrLf
 
 ; -------------------------
-; Display numbers entered and calculate sum.
+; Display numbers entered.
 ; -------------------------
     mDisplayString OFFSET numsEntered
 
@@ -233,8 +233,8 @@ main ENDP
 ; Gets user input in the form of a string of digits, then attempts to convert the
 ;   string of ASCII digits to its numeric value representation. If the input is
 ;   invalid, the user is prompted to try again with an appropriate value, otherwise
-;   the value is stored in memory. Numbers the prompt withe current number of valid
-;   guesses.
+;   the value is stored in memory. Numbers the prompt with the current number
+;   of valid guesses.
 ;
 ; Preconditions: none
 ;
@@ -262,8 +262,8 @@ ReadVal PROC USES EAX EBX ECX EDI ESI
     MOV     valid, 1                                    ; Initialize valid to true.
 
 ; Display initial prompt for signed number.
-    MOV     EBX, [EBP+32]
-    PUSH    [EBX]
+    MOV     ESI, [EBP+32]
+    PUSH    [ESI]
     CALL    WriteVal                                    ; Display line number.
     LEA     EBX, bytesRead
     mGetString [EBP+28], MAX_DIGITS, [EBP+12], EBX
@@ -276,8 +276,8 @@ _validateDigits:
     JNE     _endTryAgain
 
 ; Prompt for new signed integer.
-    MOV     EBX, [EBP+32]
-    PUSH    [EBX]
+    MOV     ESI, [EBP+32]
+    PUSH    [ESI]
     CALL    WriteVal                                    ; Display line number.
     LEA     EBX, bytesRead
     mGetString [EBP+16], MAX_DIGITS, [EBP+12], EBX
@@ -370,8 +370,8 @@ _aggregateNum:
     MOV     [EDI], EAX
 
 ; Increment line number.
-    MOV     EBX, [EBP+32]
-    INC     BYTE PTR [EBX]
+    MOV     ESI, [EBP+32]
+    INC     BYTE PTR [ESI]
 
     RET     28
 ReadVal ENDP

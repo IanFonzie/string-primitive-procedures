@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 )Program Template     (Proj6_fonbergi.asm		     Page 1 - 1
 
 
@@ -70,13 +70,13 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
 				    mDisplayString getPrompt
 				    
 				; Store Raw Input
-				    MOV     ECX, getLength      ; Max limit of readable characters.
+				    MOV     ECX, getLength                              ; Max limit of readable characters.
 				    MOV     EDX, getDest
 
 				    CALL    ReadString
 
 				    MOV     EDI, getBytes
-				    MOV     [EDI], EAX       ; Store bytes read.
+				    MOV     [EDI], EAX                                  ; Store bytes read.
 
 				    POP     EDI
 				    POP     EDX
@@ -338,7 +338,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
  0000007C  E8 00000000 E	    CALL    CrLf
 
 				; -------------------------
-				; Display numbers entered and calculate sum.
+				; Display numbers entered.
 				; -------------------------
 				    mDisplayString OFFSET numsEntered
  00000081  52		     1	    PUSH    EDX
@@ -427,8 +427,8 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
 				; Gets user input in the form of a string of digits, then attempts to convert the
 				;   string of ASCII digits to its numeric value representation. If the input is
 				;   invalid, the user is prompted to try again with an appropriate value, otherwise
-				;   the value is stored in memory. Numbers the prompt withe current number of valid
-				;   guesses.
+				;   the value is stored in memory. Numbers the prompt with the current number
+				;   of valid guesses.
 				;
 				; Preconditions: none
 				;
@@ -464,8 +464,8 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
  0000011B  C6 45 FF 01		    MOV     valid, 1                                    ; Initialize valid to true.
 
 				; Display initial prompt for signed number.
- 0000011F  8B 5D 20		    MOV     EBX, [EBP+32]
- 00000122  FF 33		    PUSH    [EBX]
+ 0000011F  8B 75 20		    MOV     ESI, [EBP+32]
+ 00000122  FF 36		    PUSH    [ESI]
  00000124  E8 00000107		    CALL    WriteVal                                    ; Display line number.
  00000129  8D 5D F0		    LEA     EBX, bytesRead
 				    mGetString [EBP+28], MAX_DIGITS, [EBP+12], EBX
@@ -477,11 +477,11 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
  00000131  8B 55 1C	     2	    MOV     EDX, [EBP+28]
  00000134  E8 00000000 E     2	    CALL    WriteString
  00000139  5A		     2	    POP     EDX
- 0000013A  B9 0000000C	     1	    MOV     ECX, MAX_DIGITS      ; Max limit of readable characters.
+ 0000013A  B9 0000000C	     1	    MOV     ECX, MAX_DIGITS                              ; Max limit of readable characters.
  0000013F  8B 55 0C	     1	    MOV     EDX, [EBP+12]
  00000142  E8 00000000 E     1	    CALL    ReadString
  00000147  8B FB	     1	    MOV     EDI, EBX
- 00000149  89 07	     1	    MOV     [EDI], EAX       ; Store bytes read.
+ 00000149  89 07	     1	    MOV     [EDI], EAX                                  ; Store bytes read.
  0000014B  5F		     1	    POP     EDI
  0000014C  5A		     1	    POP     EDX
  0000014D  59		     1	    POP     ECX
@@ -497,8 +497,8 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
  00000161  75 30		    JNE     _endTryAgain
 
 				; Prompt for new signed integer.
- 00000163  8B 5D 20		    MOV     EBX, [EBP+32]
- 00000166  FF 33		    PUSH    [EBX]
+ 00000163  8B 75 20		    MOV     ESI, [EBP+32]
+ 00000166  FF 36		    PUSH    [ESI]
  00000168  E8 000000C3		    CALL    WriteVal                                    ; Display line number.
  0000016D  8D 5D F0		    LEA     EBX, bytesRead
 				    mGetString [EBP+16], MAX_DIGITS, [EBP+12], EBX
@@ -510,11 +510,11 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
  00000175  8B 55 10	     2	    MOV     EDX, [EBP+16]
  00000178  E8 00000000 E     2	    CALL    WriteString
  0000017D  5A		     2	    POP     EDX
- 0000017E  B9 0000000C	     1	    MOV     ECX, MAX_DIGITS      ; Max limit of readable characters.
+ 0000017E  B9 0000000C	     1	    MOV     ECX, MAX_DIGITS                              ; Max limit of readable characters.
  00000183  8B 55 0C	     1	    MOV     EDX, [EBP+12]
  00000186  E8 00000000 E     1	    CALL    ReadString
  0000018B  8B FB	     1	    MOV     EDI, EBX
- 0000018D  89 07	     1	    MOV     [EDI], EAX       ; Store bytes read.
+ 0000018D  89 07	     1	    MOV     [EDI], EAX                                  ; Store bytes read.
  0000018F  5F		     1	    POP     EDI
  00000190  5A		     1	    POP     EDX
  00000191  59		     1	    POP     ECX
@@ -621,8 +621,8 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
  00000220  89 07		    MOV     [EDI], EAX
 
 				; Increment line number.
- 00000222  8B 5D 20		    MOV     EBX, [EBP+32]
- 00000225  FE 03		    INC     BYTE PTR [EBX]
+ 00000222  8B 75 20		    MOV     ESI, [EBP+32]
+ 00000225  FE 06		    INC     BYTE PTR [ESI]
 
  00000227  5E		   *	    pop    esi
  00000228  5F		   *	    pop    edi
@@ -630,7 +630,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
  0000022A  5B		   *	    pop    ebx
  0000022B  58		   *	    pop    eax
  0000022C  C9		   *	    leave  
- 0000022D  C2 001C    RET     28
+ 0000022D  C2 001C		    RET     28
  00000230			ReadVal ENDP
 
 
@@ -743,7 +743,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
 
 
 				END main
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:19:30
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 )Program Template     (Proj6_fonbergi.asm		     Symbols 2 - 1
 
 
