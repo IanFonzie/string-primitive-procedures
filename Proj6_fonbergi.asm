@@ -81,7 +81,7 @@ mDisplayString MACRO displayStr:REQ
 ENDM
 
 
-MAX_INPUT = 12
+MAX_DIGITS = 12
 
 .data
 
@@ -89,7 +89,7 @@ firstAttempt    BYTE    "Please enter a signed number: ",0
 secondAttempt   BYTE    "Please try again: ",0
 emptyMsg        BYTE    "ERROR: a value is required.",13,10,0
 errorMsg        BYTE    "ERROR: You did not enter a signed number or your number was too big.",13,10,0
-rawNumString    BYTE    MAX_INPUT DUP(0)
+rawNumString    BYTE    MAX_DIGITS DUP(0)
 bytesRead       DWORD   ?
 validNum        SDWORD  ?
 
@@ -105,26 +105,8 @@ main PROC
     PUSH    OFFSET validNum
     CALL    ReadVal
 
-    MOV     EAX, validNum
-    CALL    WriteInt
-    CALL    CrLf
-    MOV     EAX, bytesRead
-    CALL    WriteDec
-
-    PUSH    OFFSET firstAttempt
-    PUSH    OFFSET emptyMsg
-    PUSH    OFFSET errorMsg
-    PUSH    OFFSET secondAttempt
-    PUSH    OFFSET rawNumString
-    PUSH    OFFSET bytesRead
-    PUSH    OFFSET validNum
-    CALL    ReadVal
-
-    MOV     EAX, validNum
-    CALL    WriteInt
-    CALL    CrLf
-    MOV     EAX, bytesRead
-    CALL    WriteDec
+    PUSH    validNum
+    CALL    WriteVal
 
     Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -154,14 +136,14 @@ main ENDP
 ; Returns: [EBP+8] = validated number
 ; ---------------------------------------------------------------------------------
 ReadVal PROC USES EAX EBX ECX EDX ESI
-    LOCAL valid:BYTE, numInt:DWORD, sign:SDWORD
+    LOCAL valid:BYTE, numInt:SDWORD, sign:SDWORD
 
 ; -------------------------
 ; Get Integer Digits.
 ; -------------------------
     MOV     valid, 1                                    ; Initialize valid to true.
 ; Display initial prompt for signed number.
-    mGetString [EBP+32], MAX_INPUT, [EBP+16], [EBP+12]
+    mGetString [EBP+32], MAX_DIGITS, [EBP+16], [EBP+12]
 
 _validateDigits:
     MOV     numInt, 0                                   ; Initialize integer aggregator to 0.
@@ -171,7 +153,7 @@ _validateDigits:
     JNE     _endTryAgain
 
 ; Prompt for new signed integer.
-    mGetString [EBP+20], MAX_INPUT, [EBP+16], [EBP+12]
+    mGetString [EBP+20], MAX_DIGITS, [EBP+16], [EBP+12]
 
 _endTryAgain:
     MOV     ECX, bytesRead                              ; Initialize counter.
@@ -263,7 +245,7 @@ _aggregateNum:
     MOV     EAX, numInt
     MOV     [EDI], EAX
 
-    RET 24
+    RET     24
 ReadVal ENDP
 
 
@@ -282,8 +264,76 @@ ReadVal ENDP
 ;
 ; Returns: none
 ; ---------------------------------------------------------------------------------
-WriteVal PROC
-    RET
+WriteVal PROC USES EAX EBX ECX EDX EDI ESI
+    LOCAL signed:BYTE, digits[MAX_DIGITS]:BYTE, strNum[MAX_DIGITS]:BYTE
+    
+    MOV     signed, 0
+    LEA     EDI, digits
+    MOV     ECX, 0                  ; Counter for string length
+    CLD
+
+; -------------------------
+; Check sign.
+; -------------------------
+    MOV     EAX, [EBP+8]
+    CMP     EAX, 0
+    JGE     _storeDigits
+    MOV     signed, 1               ; Number is signed.
+    NEG     EAX                     ; Use the absolute value of the number.
+
+; -------------------------
+; Store digits in reverse order
+; -------------------------
+_storeDigits:
+    MOV     EDX, 0
+    MOV     EBX, 10
+    DIV     EBX
+
+    MOV     EBX, EAX                ; Store current quotient
+
+    MOV     AL, DL
+    ADD     AL, 48                  ; Add 48 to remainder to get ASCII character value.
+    STOSB
+    INC     ECX
+    MOV     EAX, EBX                ; Restore quotient
+    CMP     EAX, 0
+    JNE     _storeDigits
+
+; Append sign if number is signed.
+    CMP     signed, 1
+    JNE     _terminateDigits
+    MOV     AL, '-'
+    STOSB
+    INC     ECX
+
+; Null terminate the string.
+_terminateDigits:
+    MOV     EBX, 0
+    MOV     [EDI], EBX 
+
+; -------------------------
+; Reverse stored digits
+; -------------------------
+    MOV     ESI, EDI                ; EDI currently points to end of digits which is now our source.
+    DEC     ESI
+    LEA     EDI, strNum
+
+_reverseDigits:
+    STD
+    LODSB                           ; Move backwards through digit and store result in AL
+    CLD
+    STOSB                           ; Move forwards through strNum and store the result from AL
+    LOOP _reverseDigits
+
+; Null terminate the string.
+    MOV     EBX, 0
+    MOV     [EDI], EBX 
+
+; Display string.
+    LEA     EBX, strNum
+    mDisplayString EBX
+
+    RET     4
 WriteVal ENDP
 
 
