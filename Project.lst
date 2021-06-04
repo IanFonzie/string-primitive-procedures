@@ -1,8 +1,8 @@
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
-)Program Template     (Proj6_fonbergi.asm		     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:47:51
+5String Primitives and Macros     (Proj6_fonbergi.asm	     Page 1 - 1
 
 
-				TITLE Program Template     (Proj6_fonbergi.asm)
+				TITLE String Primitives and Macros     (Proj6_fonbergi.asm)
 
 				; Author: Ian Fonberg
 				; Last Modified: 6/4/2021
@@ -188,15 +188,15 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 	   72 27 73 20 76
 	   61 6C 69 64 20
 	   6E 75 6D 62 65
-	   72 73 0D 0A 0D
-	   0A 50 6C 65 61
-	   73 65 20 70 72
-	   6F 76 69 64 65
-	   20 00
+	   72 73 2E 0D 0A
+	   0D 0A 50 6C 65
+	   61 73 65 20 70
+	   72 6F 76 69 64
+	   65 20 00
 				                        "Written by: Ian Fonberg",13,10,
-				                        "**EC: Number each line of user input and display a running subtotal of the user's valid numbers",13,10,13,10,
+				                        "**EC: Number each line of user input and display a running subtotal of the user's valid numbers.",13,10,13,10,
 				                        "Please provide ",0
- 00000175 20 73 69 67 6E	intro2          BYTE    " signed decimal integers.",13,10,
+ 00000176 20 73 69 67 6E	intro2          BYTE    " signed decimal integers.",13,10,
 	   65 64 20 64 65
 	   63 69 6D 61 6C
 	   20 69 6E 74 65
@@ -245,13 +245,13 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 				                        "Each number needs to be small enough to fit inside a 32 bit register. After you have ",
 				                        "finished inputting the raw numbers I will display a list of the integers, their sum, ",
 				                        "and their average value.",13,10,13,10,0
- 00000257  0000000A [		testArr         SDWORD  ARRAY_SIZE DUP(?)
+ 00000258  0000000A [		testArr         SDWORD  ARRAY_SIZE DUP(?)
 	    00000000
 	   ]
- 0000027F 53 75 62 74 6F	subtotal        BYTE    "Subtotal: ",0
+ 00000280 53 75 62 74 6F	subtotal        BYTE    "Subtotal: ",0
 	   74 61 6C 3A 20
 	   00
- 0000028A 59 6F 75 20 65	numsEntered     BYTE    "You entered the following numbers: ",13,10,0
+ 0000028B 59 6F 75 20 65	numsEntered     BYTE    "You entered the following numbers: ",13,10,0
 	   6E 74 65 72 65
 	   64 20 74 68 65
 	   20 66 6F 6C 6C
@@ -259,23 +259,23 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 	   20 6E 75 6D 62
 	   65 72 73 3A 20
 	   0D 0A 00
- 000002B0 2C 20 00		comma           BYTE    ", ",0
- 000002B3 54 68 65 20 73	sumNums         BYTE    "The sum of these numbers is: ",0
+ 000002B1 2C 20 00		comma           BYTE    ", ",0
+ 000002B4 54 68 65 20 73	sumNums         BYTE    "The sum of these numbers is: ",0
 	   75 6D 20 6F 66
 	   20 74 68 65 73
 	   65 20 6E 75 6D
 	   62 65 72 73 20
 	   69 73 3A 20 00
- 000002D1 54 68 65 20 72	avgNums         BYTE    "The rounded average is: ",0
+ 000002D2 54 68 65 20 72	avgNums         BYTE    "The rounded average is: ",0
 	   6F 75 6E 64 65
 	   64 20 61 76 65
 	   72 61 67 65 20
 	   69 73 3A 20 00
- 000002EA 54 68 61 6E 6B	goodbye         BYTE    "Thanks for playing!",0
+ 000002EB 54 68 61 6E 6B	goodbye         BYTE    "Thanks for playing!",0
 	   73 20 66 6F 72
 	   20 70 6C 61 79
 	   69 6E 67 21 00
- 000002FE 01			lineNo          BYTE    1
+ 000002FF 01			lineNo          BYTE    1
 
  00000000			.code
  00000000			main PROC
@@ -295,7 +295,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 
 				    mDisplayString OFFSET intro2
  00000013  52		     1	    PUSH    EDX
- 00000014  BA 00000175 R     1	    MOV     EDX, OFFSET intro2
+ 00000014  BA 00000176 R     1	    MOV     EDX, OFFSET intro2
  00000019  E8 00000000 E     1	    CALL    WriteString
  0000001E  5A		     1	    POP     EDX
 
@@ -304,9 +304,9 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 				; -------------------------
  0000001F  B8 00000000		    MOV     EAX, 0                                      ; Initialize sum.
  00000024  B9 0000000A		    MOV     ECX, ARRAY_SIZE                             ; Initialize counter to ARRAY_SIZE.
- 00000029  BF 00000257 R	    MOV     EDI, OFFSET testArr
+ 00000029  BF 00000258 R	    MOV     EDI, OFFSET testArr
  0000002E			_readLoop:
- 0000002E  68 000002FE R	    PUSH    OFFSET lineNo
+ 0000002E  68 000002FF R	    PUSH    OFFSET lineNo
  00000033  68 00000000 R	    PUSH    OFFSET firstAttempt
  00000038  68 00000036 R	    PUSH    OFFSET emptyMsg
  0000003D  68 00000054 R	    PUSH    OFFSET errorMsg
@@ -325,7 +325,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
  0000005E  03 C3		    ADD     EAX, EBX                                    ; Add valid number to total.
 				    mDisplayString OFFSET subtotal
  00000060  52		     1	    PUSH    EDX
- 00000061  BA 0000027F R     1	    MOV     EDX, OFFSET subtotal
+ 00000061  BA 00000280 R     1	    MOV     EDX, OFFSET subtotal
  00000066  E8 00000000 E     1	    CALL    WriteString
  0000006B  5A		     1	    POP     EDX
  0000006C  50			    PUSH    EAX
@@ -342,11 +342,11 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 				; -------------------------
 				    mDisplayString OFFSET numsEntered
  00000081  52		     1	    PUSH    EDX
- 00000082  BA 0000028A R     1	    MOV     EDX, OFFSET numsEntered
+ 00000082  BA 0000028B R     1	    MOV     EDX, OFFSET numsEntered
  00000087  E8 00000000 E     1	    CALL    WriteString
  0000008C  5A		     1	    POP     EDX
 
- 0000008D  BE 00000257 R	    MOV     ESI, OFFSET testArr
+ 0000008D  BE 00000258 R	    MOV     ESI, OFFSET testArr
  00000092  B9 0000000A		    MOV     ECX, ARRAY_SIZE
 				    
  00000097  FF 36		    PUSH    [ESI]
@@ -358,7 +358,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 				; Comma separate the numbers
 				    mDisplayString OFFSET comma
  0000009F  52		     1	    PUSH    EDX
- 000000A0  BA 000002B0 R     1	    MOV     EDX, OFFSET comma
+ 000000A0  BA 000002B1 R     1	    MOV     EDX, OFFSET comma
  000000A5  E8 00000000 E     1	    CALL    WriteString
  000000AA  5A		     1	    POP     EDX
 
@@ -375,7 +375,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 				; -------------------------
 				    mDisplayString OFFSET sumNums
  000000BC  52		     1	    PUSH    EDX
- 000000BD  BA 000002B3 R     1	    MOV     EDX, OFFSET sumNums
+ 000000BD  BA 000002B4 R     1	    MOV     EDX, OFFSET sumNums
  000000C2  E8 00000000 E     1	    CALL    WriteString
  000000C7  5A		     1	    POP     EDX
 
@@ -398,7 +398,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
  000000E1			_alreadyFloored:
 				    mDisplayString OFFSET avgNums
  000000E1  52		     1	    PUSH    EDX
- 000000E2  BA 000002D1 R     1	    MOV     EDX, OFFSET avgNums
+ 000000E2  BA 000002D2 R     1	    MOV     EDX, OFFSET avgNums
  000000E7  E8 00000000 E     1	    CALL    WriteString
  000000EC  5A		     1	    POP     EDX
 				    
@@ -411,7 +411,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 				; Say goodbye to user.
 				    mDisplayString OFFSET goodbye
  000000FD  52		     1	    PUSH    EDX
- 000000FE  BA 000002EA R     1	    MOV     EDX, OFFSET goodbye
+ 000000FE  BA 000002EB R     1	    MOV     EDX, OFFSET goodbye
  00000103  E8 00000000 E     1	    CALL    WriteString
  00000108  5A		     1	    POP     EDX
 
@@ -441,7 +441,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 				;   [EBP+20]    = input, offset of invalid error message
 				;   [EBP+16]    = input, offset of second attempt prompt
 				;   [EBP+12]    = output, offset of user input string
-				;   [EBP+8]     = output, offset of number storage
+;   [EBP+8]     = output, offset of number storage
 				;
 				; Returns:
 				;   [EBP+32]    = Incremented by one.
@@ -743,8 +743,8 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
 
 
 				END main
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:33:52
-)Program Template     (Proj6_fonbergi.asm		     Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/04/21 13:47:51
+5String Primitives and Macros     (Proj6_fonbergi.asm	     Symbols 2 - 1
 
 
 
@@ -845,7 +845,7 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 000002FF Para	  Public  'DATA'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000300 Para	  Public  'DATA'	
 _TEXT  . . . . . . . . . . . . .	32 Bit	 000002AC Para	  Public  'CODE'	
 
 
@@ -1199,36 +1199,36 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
-avgNums  . . . . . . . . . . . .	Byte	 000002D1 _DATA	
+avgNums  . . . . . . . . . . . .	Byte	 000002D2 _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
-comma  . . . . . . . . . . . . .	Byte	 000002B0 _DATA	
+comma  . . . . . . . . . . . . .	Byte	 000002B1 _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 emptyMsg . . . . . . . . . . . .	Byte	 00000036 _DATA	
 errorMsg . . . . . . . . . . . .	Byte	 00000054 _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 firstAttempt . . . . . . . . . .	Byte	 00000000 _DATA	
-goodbye  . . . . . . . . . . . .	Byte	 000002EA _DATA	
+goodbye  . . . . . . . . . . . .	Byte	 000002EB _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
 intro1 . . . . . . . . . . . . .	Byte	 000000AB _DATA	
-intro2 . . . . . . . . . . . . .	Byte	 00000175 _DATA	
+intro2 . . . . . . . . . . . . .	Byte	 00000176 _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
 lightGreen . . . . . . . . . . .	Number	 0000000Ah   
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
-lineNo . . . . . . . . . . . . .	Byte	 000002FE _DATA	
+lineNo . . . . . . . . . . . . .	Byte	 000002FF _DATA	
 magenta  . . . . . . . . . . . .	Number	 00000005h   
-numsEntered  . . . . . . . . . .	Byte	 0000028A _DATA	
+numsEntered  . . . . . . . . . .	Byte	 0000028B _DATA	
 rawNumString . . . . . . . . . .	Byte	 0000009B _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
 secondAttempt  . . . . . . . . .	Byte	 00000021 _DATA	
-subtotal . . . . . . . . . . . .	Byte	 0000027F _DATA	
-sumNums  . . . . . . . . . . . .	Byte	 000002B3 _DATA	
-testArr  . . . . . . . . . . . .	DWord	 00000257 _DATA	
+subtotal . . . . . . . . . . . .	Byte	 00000280 _DATA	
+sumNums  . . . . . . . . . . . .	Byte	 000002B4 _DATA	
+testArr  . . . . . . . . . . . .	DWord	 00000258 _DATA	
 validNum . . . . . . . . . . . .	DWord	 000000A7 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA

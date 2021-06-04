@@ -1,4 +1,4 @@
-TITLE Program Template     (Proj6_fonbergi.asm)
+TITLE String Primitives and Macros     (Proj6_fonbergi.asm)
 
 ; Author: Ian Fonberg
 ; Last Modified: 6/4/2021
@@ -102,7 +102,7 @@ rawNumString    BYTE    MAX_DIGITS DUP(0)
 validNum        SDWORD  ?
 intro1          BYTE    "PROGRAMMING ASSIGNMENT 6: Designing low-level I/O procedures",13,10,
                         "Written by: Ian Fonberg",13,10,
-                        "**EC: Number each line of user input and display a running subtotal of the user's valid numbers",13,10,13,10,
+                        "**EC: Number each line of user input and display a running subtotal of the user's valid numbers.",13,10,13,10,
                         "Please provide ",0
 intro2          BYTE    " signed decimal integers.",13,10,
                         "Each number needs to be small enough to fit inside a 32 bit register. After you have ",
