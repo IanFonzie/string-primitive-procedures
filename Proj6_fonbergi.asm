@@ -37,8 +37,7 @@ mGetString MACRO getPrompt:REQ, getLength:REQ, getDest:REQ, getBytes:REQ
     PUSH    EDI
 
 ; Display Prompt.
-    MOV     EDX, getPrompt
-    CALL    WriteString
+    mDisplayString getPrompt
     
 ; Store Raw Input
     MOV     ECX, getLength      ; Max limit of readable characters.
@@ -116,14 +115,12 @@ main PROC
 ; Test Script
 ; -------------------------
 ; Introduce test script.
-    MOV     EDX, OFFSET intro1
-    CALL    WriteString
+    mDisplayString OFFSET intro1
 
     PUSH    ARRAY_SIZE
     CALL    WriteVal
 
-    MOV     EDX, OFFSET intro2
-    CALL    WriteString
+    mDisplayString OFFSET intro2
 
 ; -------------------------
 ; Add user input to array.
@@ -152,8 +149,7 @@ _readLoop:
 ; -------------------------
 ; Display numbers entered and calculate sum.
 ; -------------------------
-    MOV     EDX, OFFSET numsEntered
-    CALL    WriteString
+    mDisplayString OFFSET numsEntered
 
     MOV     ESI, OFFSET testArr
     MOV     ECX, ARRAY_SIZE
@@ -167,8 +163,7 @@ _readLoop:
 
 _writeLoop:
 ; Comma separate the numbers
-    MOV     EDX, OFFSET comma
-    CALL    WriteString
+    mDisplayString OFFSET comma
 
     ADD     ESI, TYPE testArr                           ; Access next number using register indirect addressing.
 
@@ -183,8 +178,7 @@ _writeLoop:
 ; -------------------------
 ; Display sum of numbers entered.
 ; -------------------------
-    MOV     EDX, OFFSET sumNums
-    CALL    WriteString
+    mDisplayString OFFSET sumNums
 
     PUSH    EAX                                         ; EAX holds final sum.
     CALL    WriteVal
@@ -203,8 +197,7 @@ _writeLoop:
     DEC     EAX
 
 _alreadyFloored:
-    MOV     EDX, OFFSET avgNums
-    CALL    WriteString
+    mDisplayString OFFSET avgNums
     
     PUSH     EAX                                        ; EAX contains floored average.
     CALL    WriteVal
@@ -213,8 +206,7 @@ _alreadyFloored:
     CALL    CrLf
 
 ; Say goodbye to user.
-    MOV     EDX, OFFSET goodbye
-    CALL    WriteString
+    mDisplayString OFFSET goodbye
 
     Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -226,7 +218,8 @@ main ENDP
 ; Gets user input in the form of a string of digits, then attempts to convert the
 ;   string of ASCII digits to its numeric value representation. If the input is
 ;   invalid, the user is prompted to try again with an appropriate value, otherwise
-;   the value is stored in memory.
+;   the value is stored in memory. Numbers the prompt withe current number of valid
+;   guesses.
 ;
 ; Preconditions: none
 ;
@@ -242,9 +235,11 @@ main ENDP
 ;   [EBP+12]    = output, offset of number of bytes read
 ;   [EBP+8]     = output, offset of number storage
 ;
-; Returns: [EBP+8] = validated number
+; Returns:
+;   [EBP+8]     = validated number
+;   [EBP+36]    = Incremented by one.
 ; ---------------------------------------------------------------------------------
-ReadVal PROC USES EAX EBX ECX EDX EDI ESI
+ReadVal PROC USES EAX EBX ECX EDI ESI
     LOCAL valid:BYTE, numInt:SDWORD, sign:SDWORD
 
 ; -------------------------
@@ -284,8 +279,7 @@ _endTryAgain:
 
 ; Set error state.
     MOV     valid, 0                                    ; Valid is false.
-    MOV     EDX, [EBP+28]
-    CALL    WriteString
+    mDisplayString [EBP+28]
     JMP     _validateDigits
 _notEmpty:
     MOV     ESI, [EBP+16]                               ; Move user input to ESI.
@@ -310,8 +304,7 @@ _checkLength:
     JNE     _loadNext
 ; Set error state.
     MOV     valid, 0                                    ; Valid is false.
-    MOV     EDX, [EBP+24]
-    CALL    WriteString
+    mDisplayString [EBP+24]
     JMP     _validateDigits
 
 _loadNext:
@@ -347,8 +340,7 @@ _aggregateNum:
         JMP     _continueRead
     _notDigitOrTooLarge:
         MOV     valid, 0                                ; Valid is false.
-        MOV     EDX, [EBP+24]
-        CALL    WriteString
+        mDisplayString [EBP+24]
         JMP     _validateDigits
     _continueRead:
         LODSB
