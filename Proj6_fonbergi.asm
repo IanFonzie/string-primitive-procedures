@@ -1,7 +1,7 @@
 TITLE Program Template     (Proj6_fonbergi.asm)
 
 ; Author: Ian Fonberg
-; Last Modified: 5/31/2021
+; Last Modified: 6/4/2021
 ; OSU email address: fonbergi@oregonstate.edu
 ; Course number/section:   CS271 Section 400
 ; Project Number: 6               Due Date: 6/6/2021
@@ -86,15 +86,16 @@ ARRAY_SIZE = 10
 
 .data
 
-firstAttempt    BYTE    "Please enter a signed number: ",0
-secondAttempt   BYTE    "Please try again: ",0
+firstAttempt    BYTE    " Please enter a signed number: ",0
+secondAttempt   BYTE    " Please try again: ",0
 emptyMsg        BYTE    "ERROR: a value is required.",13,10,0
 errorMsg        BYTE    "ERROR: You did not enter a signed number or your number was too big.",13,10,0
 rawNumString    BYTE    MAX_DIGITS DUP(0)
 bytesRead       DWORD   ?
 validNum        SDWORD  ?
 intro1          BYTE    "PROGRAMMING ASSIGNMENT 6: Designing low-level I/O procedures",13,10,
-                        "Written by: Ian Fonberg",13,10,13,10,
+                        "Written by: Ian Fonberg",13,10,
+                        "**EC: Number each line of user input and display a running subtotal of the user's valid numbers",13,10,13,10,
                         "Please provide ",0
 intro2          BYTE    " signed decimal integers.",13,10,
                         "Each number needs to be small enough to fit inside a 32 bit register. After you have ",
@@ -106,6 +107,7 @@ comma           BYTE    ", ",0
 sumNums         BYTE    "The sum of these numbers is: ",0
 avgNums         BYTE    "The rounded average is: ",0
 goodbye         BYTE    "Thanks for playing!",0
+lineNo          BYTE    1
 
 .code
 main PROC
@@ -126,9 +128,10 @@ main PROC
 ; -------------------------
 ; Add user input to array.
 ; -------------------------
-    MOV     ECX, ARRAY_SIZE             ; Initialize counter to 
+    MOV     ECX, ARRAY_SIZE                 ; Initialize counter to 
     MOV     EDI, OFFSET testArr
 _readLoop:
+    PUSH    OFFSET lineNo
     PUSH    OFFSET firstAttempt
     PUSH    OFFSET emptyMsg
     PUSH    OFFSET errorMsg
@@ -154,25 +157,25 @@ _readLoop:
 
     MOV     ESI, OFFSET testArr
     MOV     ECX, ARRAY_SIZE
-    MOV     EAX, 0                      ; Initialize sum
+    MOV     EAX, 0                                      ; Initialize sum
     
     PUSH    [ESI]
-    CALL    WriteVal                    ; Display first number
+    CALL    WriteVal                                    ; Display first number
 
-    ADD     EAX, [ESI]                  ; Add first number to sum
-    DEC     ECX                         ; Decrement counter.
+    ADD     EAX, [ESI]                                  ; Add first number to sum
+    DEC     ECX                                         ; Decrement counter.
 
 _writeLoop:
 ; Comma separate the numbers
     MOV     EDX, OFFSET comma
     CALL    WriteString
 
-    ADD     ESI, TYPE testArr           ; Access next number using register indirect addressing.
+    ADD     ESI, TYPE testArr                           ; Access next number using register indirect addressing.
 
     PUSH    [ESI]
-    CALL    WriteVal                    ; Display the current number.
+    CALL    WriteVal                                    ; Display the current number.
 
-    ADD     EAX, [ESI]                  ; Add current number to sum.
+    ADD     EAX, [ESI]                                  ; Add current number to sum.
     
     LOOP    _writeLoop
     CALL    CrLf
@@ -183,7 +186,7 @@ _writeLoop:
     MOV     EDX, OFFSET sumNums
     CALL    WriteString
 
-    PUSH    EAX                         ; EAX holds final sum.
+    PUSH    EAX                                         ; EAX holds final sum.
     CALL    WriteVal
     CALL    CrLf
 
@@ -203,7 +206,7 @@ _alreadyFloored:
     MOV     EDX, OFFSET avgNums
     CALL    WriteString
     
-    PUSH     EAX                        ; EAX contains floored average.
+    PUSH     EAX                                        ; EAX contains floored average.
     CALL    WriteVal
 
     CALL    CrLf
@@ -230,6 +233,7 @@ main ENDP
 ; Postconditions: none
 ;
 ; Receives:
+;   [EBP+36]    = input/output, offset of current number of valid guesses.
 ;   [EBP+32]    = input, offset of first attempt prompt
 ;   [EBP+28]    = input, offset of empty error message
 ;   [EBP+24]    = input, offset of invalid error message
@@ -247,7 +251,11 @@ ReadVal PROC USES EAX EBX ECX EDX EDI ESI
 ; Get Integer Digits.
 ; -------------------------
     MOV     valid, 1                                    ; Initialize valid to true.
+
 ; Display initial prompt for signed number.
+    MOV     EBX, [EBP+36]
+    PUSH    [EBX]
+    CALL    WriteVal                                    ; Display line number.
     mGetString [EBP+32], MAX_DIGITS, [EBP+16], [EBP+12]
 
 _validateDigits:
@@ -258,6 +266,9 @@ _validateDigits:
     JNE     _endTryAgain
 
 ; Prompt for new signed integer.
+    MOV     EBX, [EBP+36]
+    PUSH    [EBX]
+    CALL    WriteVal                                    ; Display line number.
     mGetString [EBP+20], MAX_DIGITS, [EBP+16], [EBP+12]
 
 _endTryAgain:
@@ -350,7 +361,11 @@ _aggregateNum:
     MOV     EAX, numInt
     MOV     [EDI], EAX
 
-    RET     24
+; Increment line number.
+    MOV     EBX, [EBP+36]
+    INC     BYTE PTR [EBX]
+
+    RET     32
 ReadVal ENDP
 
 
@@ -374,7 +389,7 @@ WriteVal PROC USES EAX EBX ECX EDX EDI ESI
     
     MOV     signed, 0
     LEA     EDI, digits
-    MOV     ECX, 0                  ; Counter for string length
+    MOV     ECX, 0                                      ; Counter for string length
     CLD
 
 ; -------------------------
@@ -383,8 +398,8 @@ WriteVal PROC USES EAX EBX ECX EDX EDI ESI
     MOV     EAX, [EBP+8]
     CMP     EAX, 0
     JGE     _storeDigits
-    MOV     signed, 1               ; Number is signed.
-    NEG     EAX                     ; Use the absolute value of the number.
+    MOV     signed, 1                                   ; Number is signed.
+    NEG     EAX                                         ; Use the absolute value of the number.
 
 ; -------------------------
 ; Store digits in reverse order
@@ -394,13 +409,13 @@ _storeDigits:
     MOV     EBX, 10
     DIV     EBX
 
-    MOV     EBX, EAX                ; Store current quotient
+    MOV     EBX, EAX                                    ; Store current quotient
 
     MOV     AL, DL
-    ADD     AL, 48                  ; Add 48 to remainder to get ASCII character value.
+    ADD     AL, 48                                      ; Add 48 to remainder to get ASCII character value.
     STOSB
     INC     ECX
-    MOV     EAX, EBX                ; Restore quotient
+    MOV     EAX, EBX                                    ; Restore quotient
     CMP     EAX, 0
     JNE     _storeDigits
 
@@ -419,15 +434,15 @@ _terminateDigits:
 ; -------------------------
 ; Reverse stored digits
 ; -------------------------
-    MOV     ESI, EDI                ; EDI currently points to end of digits which is now our source.
+    MOV     ESI, EDI                                    ; EDI currently points to end of digits which is now our source.
     DEC     ESI
     LEA     EDI, strNum
 
 _reverseDigits:
     STD
-    LODSB                           ; Move backwards through digit and load result in AL
+    LODSB                                               ; Move backwards through digit and load result in AL
     CLD
-    STOSB                           ; Move forwards through strNum and store the result from AL
+    STOSB                                               ; Move forwards through strNum and store the result from AL
     LOOP _reverseDigits
 
 ; Null terminate the string.
